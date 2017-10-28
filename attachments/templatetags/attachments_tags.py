@@ -9,7 +9,7 @@ from attachments.models import Attachment
 register = Library()
 
 @register.inclusion_tag('attachments/add_form.html', takes_context=True)
-def attachment_form(context, obj):
+def attachment_form(context, obj, tags=None):
     """
     Renders a "upload attachment" form.
 
@@ -18,7 +18,7 @@ def attachment_form(context, obj):
     """
     if context['user'].has_perm('attachments.add_attachment'):
         return {
-            'form': AttachmentForm(),
+            'form': AttachmentForm(initial={"tags":tags}),
             'form_url': add_url_for_obj(obj),
             'next': context.request.build_absolute_uri(),
         }
@@ -49,11 +49,12 @@ def attachment_delete_link(context, attachment):
 
 
 @register.assignment_tag
-def get_attachments_for(obj, *args, **kwargs):
+def get_attachments_for(obj, tags=None):
     """
     Resolves attachments that are attached to a given object. You can specify
     the variable name in the context the attachments are stored using the `as`
-    argument. Default context variable name is `attachments`.
+    argument. Default context variable name is `attachments`. If tags are
+    provided, the attchments will be filter to only those with the tags.
 
     Syntax::
 
@@ -65,4 +66,4 @@ def get_attachments_for(obj, *args, **kwargs):
 
         {% get_attachments_for obj as "my_attachments" %}
     """
-    return Attachment.objects.attachments_for_object(obj)
+    return Attachment.objects.attachments_for_object(obj).filter(tags=tags)

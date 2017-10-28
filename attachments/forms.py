@@ -10,7 +10,10 @@ class AttachmentForm(forms.ModelForm):
 
     class Meta:
         model = Attachment
-        fields = ('attachment_file',)
+        fields = ('attachment_file', 'tags')
+        widgets = {
+            'tags': forms.HiddenInput(),
+        }
 
     def save(self, request, obj, *args, **kwargs):
         self.instance.creator = request.user
