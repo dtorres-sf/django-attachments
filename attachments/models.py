@@ -45,6 +45,11 @@ class Attachment(models.Model):
             ('delete_foreign_attachments', _('Can delete foreign attachments')),
         )
 
+    def save(self, *args, **kwargs):
+        if(self.pk is None and not self.name):
+            self.name = self.filename.split(".")[0]
+        return super(Attachment, self).save(*args, **kwargs)
+
     def __unicode__(self):
         return '{} attached {}'.format(
             self.creator.get_username(),

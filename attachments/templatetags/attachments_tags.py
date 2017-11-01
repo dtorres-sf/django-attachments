@@ -66,4 +66,7 @@ def get_attachments_for(obj, tags=None):
 
         {% get_attachments_for obj as "my_attachments" %}
     """
-    return Attachment.objects.attachments_for_object(obj).filter(tags=tags)
+    if(tags):
+        return Attachment.objects.attachments_for_object(obj).filter(tags__name=tags)
+    else:
+        return Attachment.objects.attachments_for_object(obj)
