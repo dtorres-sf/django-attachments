@@ -19,4 +19,4 @@ class AttachmentForm(forms.ModelForm):
         self.instance.creator = request.user
         self.instance.content_type = ContentType.objects.get_for_model(obj)
         self.instance.object_id = obj.pk
-        super(AttachmentForm, self).save(*args, **kwargs)
+        return super(AttachmentForm, self).save(*args, **kwargs)
