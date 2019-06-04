@@ -3,9 +3,10 @@ from __future__ import unicode_literals
 import os
 
 from django.conf import settings
-from django.db import models
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 from taggit.managers import TaggableManager
 
@@ -16,30 +17,42 @@ def attachment_upload(instance, filename):
         app=instance.content_object._meta.app_label,
         model=instance.content_object._meta.object_name.lower(),
         pk=instance.content_object.pk,
-        filename=filename)
+        filename=filename,
+    )
 
 
 class AttachmentManager(models.Manager):
     def attachments_for_object(self, obj):
         object_type = ContentType.objects.get_for_model(obj)
-        return self.filter(content_type__pk=object_type.id,
-                           object_id=obj.pk)
+        return self.filter(content_type__pk=object_type.id, object_id=obj.pk)
 
 
+@python_2_unicode_compatible
 class Attachment(models.Model):
     objects = AttachmentManager()
-    content_type = models.ForeignKey(ContentType)
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
-    creator = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="created_attachments",
-        verbose_name=_('creator'), blank=True, null=True, on_delete=models.SET_NULL)
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="created_attachments",
+        verbose_name=_('creator'),
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL
+    )
+    attachment_file = models.FileField(
+        _('attachment'), upload_to=attachment_upload
+    )
     name = models.CharField(max_length=150, blank=True)
-    attachment_file = models.FileField(_('attachment'), upload_to=attachment_upload)
     created = models.DateTimeField(_('created'), auto_now_add=True)
     modified = models.DateTimeField(_('modified'), auto_now=True)
     tags = TaggableManager(blank=True)
 
     class Meta:
+        verbose_name = _("attachment")
+        verbose_name_plural = _("attachments")
         ordering = ['-created']
         permissions = (
             ('delete_foreign_attachments', _('Can delete foreign attachments')),
@@ -47,13 +60,14 @@ class Attachment(models.Model):
 
     def save(self, *args, **kwargs):
         if(self.pk is None and not self.name):
-            self.name = self.filename.split(".")[0]
+            self.name = self.filename.split(".")[0][:150]
         return super(Attachment, self).save(*args, **kwargs)
 
-    def __unicode__(self):
-        return '{} attached {}'.format(
-            self.creator.get_username(),
-            self.attachment_file.name)
+    def __str__(self):
+        return _('{username} attached {filename}').format(
+            username=self.creator.get_username(),
+            filename=self.attachment_file.name,
+        )
 
     @property
     def filename(self):

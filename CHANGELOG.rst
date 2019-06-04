@@ -1,6 +1,34 @@
 Changelog:
 ==========
 
+v1.4 (2019-02-14)
+-----------------
+
+- Dropped Support for Django <=1.10.
+- Fixed 'next' URL argument redirect.
+
+
+v1.3.1 (2019-01-24):
+--------------------
+
+- Django 2.1 and Python 3.7 support.
+- General code cleanup.
+
+v1.3 (2018-01-09):
+------------------
+
+- Added a missing database migration.
+- New templatetag ``attachments_count``.
+- New setting ``DELETE_ATTACHMENTS_FROM_DISK`` to delete attachment files
+  if the attachment model is deleted.
+- New setting ``FILE_UPLOAD_MAX_SIZE`` to deny file uploads exceeding this
+  value.
+
+v1.2 (2017-12-15):
+------------------
+
+- Django 1.11 and 2.0 compatibility and tests.
+
 v1.1 (2017-03-18):
 ------------------
 

@@ -1,12 +1,12 @@
-from __future__ import unicode_literals
+from django.template import Library
+from django.urls import reverse
 
-from django.template import Library, Node, Variable
-from attachments.forms import AttachmentForm
-from attachments.views import add_url_for_obj
-from django.core.urlresolvers import reverse
-from attachments.models import Attachment
+from ..forms import AttachmentForm
+from ..models import Attachment
+from ..views import add_url_for_obj
 
 register = Library()
+
 
 @register.inclusion_tag('attachments/add_form.html', takes_context=True)
 def attachment_form(context, obj, tags=None):
@@ -23,9 +23,8 @@ def attachment_form(context, obj, tags=None):
             'next': context.request.build_absolute_uri(),
         }
     else:
-        return {
-            'form': None,
-        }
+        return {'form': None}
+
 
 @register.inclusion_tag('attachments/delete_link.html', takes_context=True)
 def attachment_delete_link(context, attachment):
@@ -38,17 +37,30 @@ def attachment_delete_link(context, attachment):
     ``attachments.delete_foreign_attachments`` which allows him to delete all
     attachments.
     """
-    if (context['user'].has_perm('attachments.delete_foreign_attachments')
-    or (context['user'] == attachment.creator and
-        context['user'].has_perm('attachments.delete_attachment'))):
+    if context['user'].has_perm('attachments.delete_foreign_attachments') or (
+        context['user'] == attachment.creator
+        and context['user'].has_perm('attachments.delete_attachment')
+    ):
         return {
             'next': context.request.build_absolute_uri(),
-            'delete_url': reverse('attachments:delete', kwargs={'attachment_pk': attachment.pk})
+            'delete_url': reverse(
+                'attachments:delete', kwargs={'attachment_pk': attachment.pk}
+            ),
         }
     return {'delete_url': None}
 
 
-@register.assignment_tag
+@register.simple_tag
+def attachments_count(obj):
+    """
+    Counts attachments that are attached to a given object::
+
+        {% attachments_count obj %}
+    """
+    return Attachment.objects.attachments_for_object(obj).count()
+
+
+@register.simple_tag
 def get_attachments_for(obj, tags=None):
     """
     Resolves attachments that are attached to a given object. You can specify
@@ -57,12 +69,6 @@ def get_attachments_for(obj, tags=None):
     provided, the attchments will be filter to only those with the tags.
 
     Syntax::
-
-        {% get_attachments_for obj %}
-        {% for att in attachments %}
-            {{ att }}
-            {% attachment_delete_link att %}
-        {% endfor %}
 
         {% get_attachments_for obj as "my_attachments" %}
     """

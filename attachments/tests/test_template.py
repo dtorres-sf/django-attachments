@@ -1,9 +1,6 @@
-from __future__ import unicode_literals
+from django.urls import reverse
 
-from django.core.urlresolvers import reverse
-
-from attachments.models import Attachment
-
+from ..models import Attachment
 from .base import BaseTestCase
 
 
@@ -18,6 +15,19 @@ class ViewTestCase(BaseTestCase):
         response = self.client.get(self.item_url)
         attachment = Attachment.objects.attachments_for_object(self.obj)[0]
         self.assertTrue(attachment.attachment_file.url in str(response.content))
+
+    def test_attachment_count_is_listed(self):
+        self.client.login(**self.cred_jon)
+        self._upload_testfile()
+        self._upload_testfile()
+        response = self.client.get(self.item_url)
+        attachment_count = Attachment.objects.attachments_for_object(
+            self.obj
+        ).count()
+        self.assertTrue(
+            "Object has %d attachments" % attachment_count
+            in str(response.content)
+        )
 
     def test_upload_form_is_listed_with_add_permission(self):
         self.client.login(**self.cred_jon)
