@@ -72,3 +72,7 @@ class Attachment(models.Model):
     @property
     def filename(self):
         return os.path.split(self.attachment_file.name)[1]
+
+    def get_absolute_url(self):
+        if(self.content_object and hasattr(self.content_object, "get_absolute_url")):
+            return "{}{}/".format(self.content_object.get_absolute_url(), "attachments")

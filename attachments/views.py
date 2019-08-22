@@ -17,6 +17,9 @@ from .forms import AttachmentForm
 from .models import Attachment
 from django.template.loader import render_to_string
 from settings.models import AttachmentGroup
+import logging
+
+logger = logging.getLogger(__name__)
 
 def add_url_for_obj(obj):
     return reverse(
@@ -74,13 +77,14 @@ def add_attachment(
         }
         html = render_to_string("attachments/attachment.html", context, request)
         return {"success": True, "html": html}
-
+    logger.error("Error adding attachment {}".format(form.errors))
     template_context = {
         'form': form,
         'form_url': add_url_for_obj(obj),
         'next': next,
     }
-    template_context.update(extra_context)
+    if(extra_context):
+        template_context.update(extra_context)
     return {"success": False, "reason": "invalid form"}
 
 @login_required
